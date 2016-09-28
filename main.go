@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/Sirupsen/logrus"
-	"gofile-restapi/route"
+	"github.com/flyer5200/gofile-restapi/route"
 	"github.com/labstack/echo/engine/fasthttp"
 )
 
