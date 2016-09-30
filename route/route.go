@@ -3,7 +3,7 @@ package route
 import (
 	"github.com/labstack/echo"
 	echoMw "github.com/labstack/echo/middleware"
-	"github.com/flyer5200/gofile-restapi/api"
+	"gofile-restapi/api"
 	"github.com/flyer5200/gofile-restapi/handler"
 )
 
@@ -24,8 +24,8 @@ func Init() *echo.Echo {
 	v1 := e.Group("/api/v1")
 	{
 		v1.GET("/files/:id/:pv", api.ListDirs())
+		v1.POST("/file/:name", api.GetFile())
 		v1.POST("/files", api.PostFile())
-		v1.GET("/file/:path", api.GetFile())
 		v1.DELETE("/file/:path", api.DeleteFiles())
 	}
 	return e

@@ -4,6 +4,8 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/flyer5200/gofile-restapi/route"
 	"github.com/labstack/echo/engine/fasthttp"
+	"log"
+	"gofile-restapi/config"
 )
 
 func init() {
@@ -13,5 +15,6 @@ func init() {
 
 func main() {
 	router := route.Init()
-	router.Run(fasthttp.New(":8888"))
+	log.Println("PV-FileManager Started! Listen on", config.Config["bind"])
+	router.Run(fasthttp.New(config.Config["bind"]))
 }

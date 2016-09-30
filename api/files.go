@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"time"
 )
 
 var result struct {
@@ -14,7 +15,17 @@ var result struct {
 	msg    string
 }
 
-var basePath = "/var/lib/kubelet/pods/"
+type (
+	fileInfo struct{
+		Name string       // base name of the file
+		Size int64        // length in bytes for regular files; system-dependent for others
+		ModTime time.Time // modification time
+		IsDir bool        // abbreviation for Mode().IsDir()
+	}
+)
+
+//var basePath = "/var/lib/kubelet/pods/"
+var basePath = "d://"
 var volumePath = "/volumes/kubernetes.io~glusterfs/"
 
 // 获取文件流
@@ -22,8 +33,9 @@ func GetFile() echo.HandlerFunc {
 	return func(c echo.Context) (err error) {
 		// 通过名称
 		path := c.Param("path")
-		file, error := ioutil.ReadFile(path)
-		if error != nil {
+		name := c.Param("name")
+		file, e := ioutil.ReadFile(path + name)
+		if e != nil {
 			c.Response().Header().Set(echo.HeaderContentType, echo.MIMEOctetStream)
 			c.Response().WriteHeader(http.StatusOK)
 			c.Response().Write(file)
@@ -38,11 +50,18 @@ func ListDirs() echo.HandlerFunc {
 		// 通过名称
 		id := c.Param("id")
 		pv := c.Param("pv")
-		files, error := ioutil.ReadDir(basePath + id + volumePath + pv)
-		if error != nil && files != nil {
-			return c.JSON(fasthttp.StatusOK, files)
+		results, _ := ioutil.ReadDir(basePath + id + volumePath + pv)
+		var l [] *fileInfo
+		for _, file := range results{
+			fileinfo := &fileInfo{
+				Name: file.Name(),
+				IsDir:file.IsDir(),
+				ModTime:file.ModTime(),
+				Size:file.Size(),
+			}
+			l = append(l, fileinfo)
 		}
-		return c.JSON(fasthttp.StatusOK, nil)
+		return c.JSON(fasthttp.StatusOK, l)
 	}
 }
 
