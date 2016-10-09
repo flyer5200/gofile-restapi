@@ -8,11 +8,12 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"gofile-restapi/config"
 )
 
 var result struct {
-	status int
-	msg    string
+	Status int
+	Msg    string
 }
 
 type (
@@ -24,49 +25,63 @@ type (
 	}
 )
 
-//var basePath = "/var/lib/kubelet/pods/"
-var basePath = "d://"
-var volumePath = "/volumes/kubernetes.io~glusterfs/"
-
-// 获取文件流
 func GetFile() echo.HandlerFunc {
 	return func(c echo.Context) (err error) {
 		// 通过名称
-		path := c.Param("path")
-		name := c.Param("name")
-		file, e := ioutil.ReadFile(path + name)
-		if e != nil {
-			c.Response().Header().Set(echo.HeaderContentType, echo.MIMEOctetStream)
-			c.Response().WriteHeader(http.StatusOK)
-			c.Response().Write(file)
-			c.Response().(http.Flusher).Flush()
+		pv := c.Param("pv")
+		path := c.QueryParam("path")
+		if(path == ""){
+			return rangeDirs(c, config.PvLink[pv])
 		}
-		return nil
+		isdir := isFileOrDir(config.PvLink[pv] +"/"+  path, true)
+		if(isdir){
+			return rangeDirs(c, config.PvLink[pv] +"/"+  path)
+		}
+		return download(c, config.PvLink[pv] +"/"+  path, path)
 	}
 }
 
-func ListDirs() echo.HandlerFunc {
-	return func(c echo.Context) (err error) {
-		// 通过名称
-		id := c.Param("id")
-		pv := c.Param("pv")
-		results, _ := ioutil.ReadDir(basePath + id + volumePath + pv)
-		var l [] *fileInfo
-		for _, file := range results{
-			fileinfo := &fileInfo{
-				Name: file.Name(),
-				IsDir:file.IsDir(),
-				ModTime:file.ModTime(),
-				Size:file.Size(),
-			}
-			l = append(l, fileinfo)
+func download(c echo.Context, path string, filename string) error  {
+	file, err := ioutil.ReadFile(path)
+	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEOctetStream)
+	c.Response().Header().Set(echo.HeaderContentDisposition, "attachment;filename="+filename)
+	c.Response().WriteHeader(http.StatusOK)
+	c.Response().Write(file)
+	return err
+}
+
+func rangeDirs(c echo.Context, path string)  error {
+	results, _ := ioutil.ReadDir(path)
+	var l [] *fileInfo
+	for _, file := range results{
+		fileinfo := &fileInfo{
+			Name: file.Name(),
+			IsDir:file.IsDir(),
+			ModTime:file.ModTime(),
+			Size:file.Size(),
 		}
-		return c.JSON(fasthttp.StatusOK, l)
+		l = append(l, fileinfo)
 	}
+	return c.JSON(fasthttp.StatusOK, l)
+}
+
+// 判断是文件还是目录，根据decideDir为true表示判断是否为目录；否则判断是否为文件
+func isFileOrDir(filename string, decideDir bool) bool {
+	fileInfo, err := os.Stat(filename)
+	if err != nil {
+		return false
+	}
+	isDir := fileInfo.IsDir()
+	if decideDir {
+		return isDir
+	}
+	return !isDir
 }
 
 func PostFile() echo.HandlerFunc {
 	return func(c echo.Context) (err error) {
+		pv := c.Param("pv")
+		path := c.QueryParam("path")
 		// Source
 		file, err := c.FormFile("file")
 		if err != nil {
@@ -79,7 +94,7 @@ func PostFile() echo.HandlerFunc {
 		defer src.Close()
 
 		// Destination
-		dst, err := os.Create(basePath + file.Filename)
+		dst, err := os.Create(config.PvLink[pv]+"/"+ path+ "/"+ file.Filename)
 		if err != nil {
 			return err
 		}
@@ -89,8 +104,8 @@ func PostFile() echo.HandlerFunc {
 		if _, err = io.Copy(dst, src); err != nil {
 			return err
 		}
-		result.status = fasthttp.StatusOK
-		result.msg = "文件上传成功!"
+		result.Status = fasthttp.StatusOK
+		result.Msg = "文件上传成功!"
 		return c.JSON(fasthttp.StatusOK, result)
 	}
 }
@@ -98,17 +113,16 @@ func PostFile() echo.HandlerFunc {
 func DeleteFiles() echo.HandlerFunc {
 	return func(c echo.Context) (err error) {
 		// 通过名称
-		path := c.Param("path")
+		pv := c.Param("pv")
+		path := c.QueryParam("path")
 		if path != "" {
-			err := os.RemoveAll(basePath + path)
-			if err != nil {
-				result.status = fasthttp.StatusOK
-				result.msg = "文件上传成功!"
-				return c.JSON(fasthttp.StatusOK, result)
-			}
+			os.RemoveAll(config.PvLink[pv] +"/"+  path)
+			result.Status = fasthttp.StatusOK
+			result.Msg = "文件删除成功!"
+			return c.JSON(fasthttp.StatusOK, result)
 		}
-		result.status = fasthttp.StatusInternalServerError
-		result.msg = "文件上传失败!"
+		result.Status = fasthttp.StatusInternalServerError
+		result.Msg = "文件删除失败!"
 		return c.JSON(fasthttp.StatusInternalServerError, result)
 	}
 }

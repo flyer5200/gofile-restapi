@@ -3,7 +3,7 @@ package config
 import (
 	configtool "github.com/larspensjo/config"
 	"flag"
-	"log"
+	"fmt"
 )
 
 var (
@@ -17,7 +17,7 @@ func init()  {
 	//set config file std
 	cfg, err := configtool.ReadDefault(*configFile)
 	if err != nil {
-		log.Fatalf("Fail to find", *configFile, err)
+		fmt.Println("Fail to find", *configFile, err)
 	}
 	//Initialized topic from the configuration
 	for _, section := range cfg.Sections() {
@@ -27,7 +27,7 @@ func init()  {
 				options, err := cfg.String(section, v)
 				if err == nil {
 					Config[v] = options
-					log.Println("load config -> "+v+":", options)
+					fmt.Println("load config -> "+v+":", options)
 				}
 			}
 		}

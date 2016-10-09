@@ -1,7 +1,6 @@
 package config
 
 import (
-	"log"
 	"github.com/howeyc/fsnotify"
 	"io/ioutil"
 	"os"
@@ -16,38 +15,32 @@ func init() {
 	//全部递归一次, 得到volume
 	recursiveVolumes(Config["base_path"])
 	//监视BasePath目录变更情况
-	//doWatch(Config["base_path"], true) //pod目录watcher
 	NewWatcher(initWatch(Config["base_path"]))
 }
 
 func NewWatcher(paths []string) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
-	done := make(chan bool)
 	go func() {
 		for {
 			select {
 			case ev := <-watcher.Event:
-				log.Println("event:", ev.Name)
+				fmt.Println("change:", ev.Name)
 				go recursiveVolumes(Config["base_path"])
 			case err := <-watcher.Error:
-				log.Fatal("error:", err)
+				fmt.Println("error:", err)
 			}
 		}
 	}()
 	for _, path := range paths {
-		log.Println("addWatch:", path)
+		fmt.Println("addWatch:", path)
 		err = watcher.Watch(path)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 	}
-	// Hang so program doesn't exit
-	<-done
-	/* ... do stuff ... */
-	watcher.Close()
 }
 
 func initWatch(path string) []string{
@@ -58,7 +51,7 @@ func initWatch(path string) []string{
 		if !fi.IsDir() {
 			break
 		} else {
-			var temp = path+ "\\" +fi.Name() + "\\"+ Config["volume_path"]
+			var temp = path+ "/" +fi.Name() + "/"+ Config["volume_path"]
 			exists, _ :=PathExists(temp)
 			if(exists){
 				paths = append(paths, temp)
@@ -98,7 +91,7 @@ func recursiveVolumes(path string) {
 
 func printPv(){
 	for pv,path := range PvLink{
-		log.Println(pv, path)
+		fmt.Println(pv, path)
 	}
 }
 

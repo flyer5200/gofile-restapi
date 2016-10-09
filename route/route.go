@@ -23,10 +23,9 @@ func Init() *echo.Echo {
 	// Routes
 	v1 := e.Group("/api/v1")
 	{
-		v1.GET("/files/:id/:pv", api.ListDirs())
-		v1.POST("/file/:name", api.GetFile())
-		v1.POST("/files", api.PostFile())
-		v1.DELETE("/file/:path", api.DeleteFiles())
+		v1.GET("/files/:pv", api.GetFile())
+		v1.POST("/files/:pv", api.PostFile())
+		v1.DELETE("/files/:pv", api.DeleteFiles())
 	}
 	return e
 }
