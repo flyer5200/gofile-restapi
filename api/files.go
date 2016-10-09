@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 	"time"
-	"gofile-restapi/config"
+	"github.com/flyer5200/gofile-restapi/config"
 )
 
 var result struct {
