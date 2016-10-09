@@ -3,7 +3,7 @@ package route
 import (
 	"github.com/labstack/echo"
 	echoMw "github.com/labstack/echo/middleware"
-	"gofile-restapi/api"
+	"github.com/flyer5200/gofile-restapi/api"
 	"github.com/flyer5200/gofile-restapi/handler"
 )
 
