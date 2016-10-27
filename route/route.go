@@ -23,6 +23,7 @@ func Init() *echo.Echo {
 	// Routes
 	v1 := e.Group("/api/v1")
 	{
+		v1.GET("/cache", api.GetCache())
 		v1.GET("/files/:pv", api.GetFile())
 		v1.POST("/files/:pv", api.PostFile())
 		v1.DELETE("/files/:pv", api.DeleteFiles())

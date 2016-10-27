@@ -25,6 +25,12 @@ type (
 	}
 )
 
+func GetCache() echo.HandlerFunc {
+	return func(c echo.Context) (err error) {
+		return c.JSON(fasthttp.StatusOK, config.PvLink)
+	}
+}
+
 func GetFile() echo.HandlerFunc {
 	return func(c echo.Context) (err error) {
 		// 通过名称
